@@ -6,7 +6,7 @@ using namespace ofxCv;
 //--------------------------------------------------------------
 void ofApp::setup(){
 	// Load the image
-	test.loadImage("http://i0.kym-cdn.com/entries/icons/original/000/013/564/doge.jpg");
+	test.loadImage("https://timedotcom.files.wordpress.com/2016/05/rts8haa.jpg");
 
 	double ideal_height = ofGetHeight() / 2;
 	double ideal_width = ofGetWidth() / 2;
@@ -24,35 +24,58 @@ void ofApp::setup(){
 		test.resize(scale_factor * width, scale_factor * height);
 	}
 
-	is_grayscale = false;
 	img.setFromPixels(test.getPixels());
-	gray_img.setFromColorImage(img);
 
-	// Load the grayscale button
+	// Load the gui
 	gui.setup();
-	gui.add(grayscale_button.setup("Grayscale"));
+	gui.add(revert_button.setup("Revert"));
+	gui.add(grayscale_toggle.setup("Grayscale", false));
+	gui.add(faces_toggle.setup("Show faces", false));
 
-	grayscale_button.addListener(this, &ofApp::buttonPressed);
+	revert_button.addListener(this, &ofApp::revertButtonPressed);
+
+	finder.setup("haarcascade_frontalface_default.xml");
+	finder.setPreset(ObjectFinder::Fast);
 }
 
-void ofApp::buttonPressed(const void *sender) {
-	is_grayscale = true;
+void ofApp::revertButtonPressed(const void *sender) {
+	img.setFromPixels(test.getPixels());
+	grayscale_toggle = false;
+	faces_toggle = false;
 }
 
 //--------------------------------------------------------------
 void ofApp::update(){
-
+	finder.update(img);
 }
 
 //--------------------------------------------------------------
 void ofApp::draw(){
 	gui.draw();
-	if (is_grayscale) {
+
+	if (grayscale_toggle) {
+		ofSetColor(255, 255, 255);
+		ofxCvGrayscaleImage gray_img;
+		gray_img.setFromColorImage(img);
 		gray_img.draw(ofGetWidth() / 4, ofGetHeight() / 4);
 	}
 	else {
+		ofSetColor(255, 255, 255);
 		img.draw(ofGetWidth() / 4, ofGetHeight() / 4);
 	}
+
+	if (faces_toggle) {
+		ofNoFill();
+		ofSetColor(0, 0, 250);
+		ofRectangle face;
+		for (unsigned int i = 0; i < finder.size(); i++) {
+			face = finder.getObject(i);
+			face.setPosition(face.x + ofGetWidth() / 4, face.y + ofGetHeight() / 4);
+			ofDrawRectangle(face);
+		}
+
+	}
+
 }
 
 //--------------------------------------------------------------

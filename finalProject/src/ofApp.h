@@ -7,20 +7,24 @@
 
 class ofApp : public ofBaseApp{
 	ofImage test;
+	// Remember to ask Patrick about separate class for Image that has a ofxCvImage pointer, 
+	// and each time toggle from grey to color create new image on heap and delete old
+	// Class will keep track of filters applied
 	ofxCvColorImage img;
-	ofxCvGrayscaleImage gray_img;
+	ofxCv::ObjectFinder finder;
 
 	ofxPanel gui;
-	ofxButton grayscale_button;
+	ofxButton revert_button;
+	ofxToggle grayscale_toggle;
+	ofxToggle faces_toggle;
 
-	bool is_grayscale;
 
 	public:
 		void setup();
 		void update();
 		void draw();
 
-		void buttonPressed(const void *sender);
+		void revertButtonPressed(const void *sender);
 
 		void keyPressed(int key);
 		void keyReleased(int key);

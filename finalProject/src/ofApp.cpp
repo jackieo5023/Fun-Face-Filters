@@ -5,8 +5,15 @@ using namespace ofxCv;
 
 //--------------------------------------------------------------
 void ofApp::setup(){
-	// Load the image
-	test.loadImage("https://timedotcom.files.wordpress.com/2016/05/rts8haa.jpg");
+	// Load the image - from http://openframeworks.cc/documentation/utils/ofSystemUtils/#!show_ofSystemLoadDialog
+	ofFileDialogResult result = ofSystemLoadDialog("Load file");
+	if (result.bSuccess) {
+		string path = result.getPath();
+		test.loadImage(path);
+	}
+	else {
+		test.loadImage("https://timedotcom.files.wordpress.com/2016/05/rts8haa.jpg");
+	}
 
 	double ideal_height = ofGetHeight() / 2;
 	double ideal_width = ofGetWidth() / 2;
@@ -58,6 +65,8 @@ void ofApp::draw(){
 		ofxCvGrayscaleImage gray_img;
 		gray_img.setFromColorImage(img);
 		gray_img.draw(ofGetWidth() / 4, ofGetHeight() / 4);
+		//img.drawROI(5, 5);
+		drag.draw(100, 100);
 	}
 	else {
 		ofSetColor(255, 255, 255);
@@ -73,9 +82,7 @@ void ofApp::draw(){
 			face.setPosition(face.x + ofGetWidth() / 4, face.y + ofGetHeight() / 4);
 			ofDrawRectangle(face);
 		}
-
 	}
-
 }
 
 //--------------------------------------------------------------
@@ -100,12 +107,49 @@ void ofApp::mouseDragged(int x, int y, int button){
 
 //--------------------------------------------------------------
 void ofApp::mousePressed(int x, int y, int button){
+	/*if (x < ofGetWidth() / 4) {
+		start_x = ofGetWidth() / 4;
+	}
+	else if (x > ofGetWidth() / 4 + img.getWidth()) {
+		start_x = ofGetWidth() / 4 + img.getWidth();
+	}
+	else {
+		start_x = x;
+	}
 
+	if (y < ofGetHeight() / 4) {
+		start_y = ofGetHeight() / 4;
+	}
+	else if (y > ofGetHeight() / 4 + img.getHeight()) {
+		start_y = ofGetHeight() / 4 + img.getHeight();
+	}
+	else {
+		start_y = y;
+	}*/
 }
 
 //--------------------------------------------------------------
 void ofApp::mouseReleased(int x, int y, int button){
+	//int end_x = x;
+	//int end_y = y;
 
+	//if (end_x < start_x) {
+	//	end_x = start_x;
+	//	start_x = x;
+	//}
+	//if (end_y < start_y) {
+	//	end_y = start_y;
+	//	start_y = y;
+	//}
+
+	//ofPoint s(start_x, start_y);
+	//ofPoint e(end_x, end_y);
+	//rect.set(s, e);
+	////img.setROI(start_x, start_y, end_x - start_x, end_y - start_y);
+	//img.setROI(rect);
+	//drag.setFromPixels(img.getRoiPixels());
+	////rect = img.getROI();
+	//img.resetROI();
 }
 
 //--------------------------------------------------------------

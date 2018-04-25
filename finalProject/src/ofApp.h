@@ -19,6 +19,13 @@ class ofApp : public ofBaseApp{
 	ofxToggle faces_toggle;
 
 
+	ofRectangle rect;
+	//ofImage drag;
+	ofxCvColorImage drag;
+
+	int start_x;
+	int start_y;
+
 	public:
 		void setup();
 		void update();

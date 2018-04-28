@@ -5,16 +5,36 @@ using namespace ofxCv;
 
 //--------------------------------------------------------------
 void ofApp::setup(){
-	// Load the image - from http://openframeworks.cc/documentation/utils/ofSystemUtils/#!show_ofSystemLoadDialog
-	ofFileDialogResult result = ofSystemLoadDialog("Load file");
-	if (result.bSuccess) {
-		string path = result.getPath();
-		test.loadImage(path);
-	}
-	else {
-		test.loadImage("https://timedotcom.files.wordpress.com/2016/05/rts8haa.jpg");
-	}
+	// Load the default image of our good man Carl
+	test.loadImage("http://xpacc.illinois.edu/files/2014/12/xpacc3-250x375.jpg");
 
+	updateImage();
+
+	// Load the gui
+	gui.setup();
+	gui.add(load_image_from_file_button.setup("Choose image file"));
+	gui.add(load_image_from_link_button.setup("Choose image link"));
+	gui.add(revert_button.setup("Revert"));
+	gui.add(grayscale_toggle.setup("Grayscale", false));
+	gui.add(faces_toggle.setup("Show faces", false));
+	gui.add(video_toggle.setup("Show video", false));
+
+	// Set up the button listeners
+	load_image_from_file_button.addListener(this, &ofApp::loadImageFromFileButtonPressed);
+	load_image_from_link_button.addListener(this, &ofApp::loadImageFromLinkButtonPressed);
+	revert_button.addListener(this, &ofApp::revertButtonPressed);
+
+	// Set up the camera and facial recognition
+	ofSetVerticalSync(true);
+	ofSetFrameRate(120);
+	finder.setup("haarcascade_frontalface_default.xml");
+	finder.setPreset(ObjectFinder::Fast);
+	finder.getTracker().setSmoothingRate(.3);
+	camera.setup(484, 363);
+	ofEnableAlphaBlending();
+}
+
+void ofApp::updateImage() {
 	double ideal_height = ofGetHeight() / 2;
 	double ideal_width = ofGetWidth() / 2;
 	double height = test.getHeight();
@@ -32,17 +52,6 @@ void ofApp::setup(){
 	}
 
 	img.setFromPixels(test.getPixels());
-
-	// Load the gui
-	gui.setup();
-	gui.add(revert_button.setup("Revert"));
-	gui.add(grayscale_toggle.setup("Grayscale", false));
-	gui.add(faces_toggle.setup("Show faces", false));
-
-	revert_button.addListener(this, &ofApp::revertButtonPressed);
-
-	finder.setup("haarcascade_frontalface_default.xml");
-	finder.setPreset(ObjectFinder::Fast);
 }
 
 void ofApp::revertButtonPressed(const void *sender) {
@@ -51,28 +60,85 @@ void ofApp::revertButtonPressed(const void *sender) {
 	faces_toggle = false;
 }
 
+// From http://openframeworks.cc/documentation/utils/ofSystemUtils/#!show_ofSystemLoadDialog
+void ofApp::loadImageFromFileButtonPressed(const  void *sender) {
+	ofFileDialogResult result = ofSystemLoadDialog("Load file");
+	if (result.bSuccess) {
+		string path = result.getPath();
+		// Does not work with png
+		if (path.substr(path.length() - 3, path.length()) == "png") {
+			ofSystemAlertDialog("Use a jpg, not png!");
+			return;
+		}
+		test.loadImage(path);
+		updateImage();
+	}
+}
+
+void ofApp::loadImageFromLinkButtonPressed(const void *sender) {
+	string link = ofSystemTextBoxDialog("What is the link?", "Link");
+	test.loadImage(link);
+	updateImage();
+}
+
 //--------------------------------------------------------------
 void ofApp::update(){
-	finder.update(img);
+	if (video_toggle) {
+		camera.update();
+		if (camera.isFrameNew()) {
+			finder.update(camera);
+		}
+	}
+	else {
+		finder.update(img);
+	}
 }
 
 //--------------------------------------------------------------
 void ofApp::draw(){
 	gui.draw();
 
+	// Handles face tracking when taking in video
+	if (video_toggle) {
+		ofSetColor(255, 255, 255);
+		camera.draw(ofGetWidth() / 4, ofGetHeight() / 4);
+		ofNoFill();
+		ofSetColor(0, 0, 250);
+		// Tracks face - doesn't entirely work yet
+		for (int i = 0; i < finder.size(); i++) {
+			ofRectangle face = finder.getObjectSmoothed(i);
+			//face.setPosition(face.x + ofGetWidth() / 4, face.y + ofGetHeight() / 4);
+			//face.setAnchorPercent(.5, .5);
+			//float scaleAmount = .85 * face.width / face.getWidth();
+			ofPushMatrix();
+			ofTranslate(face.x + /*face.width / 2.*/ofGetWidth() / 4, face.y + /*face.height * .42*/ofGetHeight() / 4);
+			//ofScale(scaleAmount, scaleAmount);
+			ofDrawRectangle(face);
+			ofPopMatrix();
+			ofPushMatrix();
+			ofTranslate(face.getPosition());
+			//ofDrawBitmapStringHighlight(ofToString(finder.getLabel(i)), 0, 0);
+			ofDrawLine(ofVec2f(), toOf(finder.getVelocity(i)) * 10);
+			ofPopMatrix();
+		}
+		return;
+	}
+
+	// Handles grayscale
 	if (grayscale_toggle) {
 		ofSetColor(255, 255, 255);
 		ofxCvGrayscaleImage gray_img;
 		gray_img.setFromColorImage(img);
 		gray_img.draw(ofGetWidth() / 4, ofGetHeight() / 4);
 		//img.drawROI(5, 5);
-		drag.draw(100, 100);
+		//drag.draw(100, 100);
 	}
 	else {
 		ofSetColor(255, 255, 255);
 		img.draw(ofGetWidth() / 4, ofGetHeight() / 4);
 	}
 
+	// Handles facial recognition on an image
 	if (faces_toggle) {
 		ofNoFill();
 		ofSetColor(0, 0, 250);

@@ -11,12 +11,18 @@ class ofApp : public ofBaseApp{
 	// and each time toggle from grey to color create new image on heap and delete old
 	// Class will keep track of filters applied
 	ofxCvColorImage img;
+
 	ofxCv::ObjectFinder finder;
+	ofVideoGrabber camera;
 
 	ofxPanel gui;
+	ofxButton load_image_from_file_button;
+	ofxButton load_image_from_link_button;
 	ofxButton revert_button;
 	ofxToggle grayscale_toggle;
 	ofxToggle faces_toggle;
+	ofxToggle video_toggle;
+
 
 
 	ofRectangle rect;
@@ -31,7 +37,11 @@ class ofApp : public ofBaseApp{
 		void update();
 		void draw();
 
+		void updateImage();
+
 		void revertButtonPressed(const void *sender);
+		void loadImageFromFileButtonPressed(const void *sender);
+		void loadImageFromLinkButtonPressed(const void *sender);
 
 		void keyPressed(int key);
 		void keyReleased(int key);

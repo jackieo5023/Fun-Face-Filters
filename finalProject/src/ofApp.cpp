@@ -104,22 +104,11 @@ void ofApp::draw(){
 		camera.draw(ofGetWidth() / 4, ofGetHeight() / 4);
 		ofNoFill();
 		ofSetColor(0, 0, 250);
-		// Tracks face - doesn't entirely work yet
+		// Tracks face with square
 		for (int i = 0; i < finder.size(); i++) {
 			ofRectangle face = finder.getObjectSmoothed(i);
-			//face.setPosition(face.x + ofGetWidth() / 4, face.y + ofGetHeight() / 4);
-			//face.setAnchorPercent(.5, .5);
-			//float scaleAmount = .85 * face.width / face.getWidth();
-			ofPushMatrix();
-			ofTranslate(face.x + /*face.width / 2.*/ofGetWidth() / 4, face.y + /*face.height * .42*/ofGetHeight() / 4);
-			//ofScale(scaleAmount, scaleAmount);
+			face.setPosition(face.x + ofGetWidth() / 4, face.y + ofGetHeight() / 4);
 			ofDrawRectangle(face);
-			ofPopMatrix();
-			ofPushMatrix();
-			ofTranslate(face.getPosition());
-			//ofDrawBitmapStringHighlight(ofToString(finder.getLabel(i)), 0, 0);
-			ofDrawLine(ofVec2f(), toOf(finder.getVelocity(i)) * 10);
-			ofPopMatrix();
 		}
 		return;
 	}

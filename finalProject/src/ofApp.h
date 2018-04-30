@@ -5,11 +5,8 @@
 #include "../addons/ofxOpenCv/src/ofxOpenCv.h"
 #include "../addons/ofxCv/src/ofxCv.h"
 
-class ofApp : public ofBaseApp{
+class ofApp : public ofBaseApp {
 	ofImage test;
-	// Remember to ask Patrick about separate class for Image that has a ofxCvImage pointer, 
-	// and each time toggle from grey to color create new image on heap and delete old
-	// Class will keep track of filters applied
 	ofxCvColorImage img;
 
 	ofxCv::ObjectFinder finder;
@@ -22,8 +19,6 @@ class ofApp : public ofBaseApp{
 	ofxToggle grayscale_toggle;
 	ofxToggle faces_toggle;
 	ofxToggle video_toggle;
-
-
 
 	ofRectangle rect;
 	//ofImage drag;

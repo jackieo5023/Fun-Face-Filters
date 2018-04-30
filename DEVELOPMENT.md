@@ -4,3 +4,4 @@
 * 4.24 Attempted to implement selecting a portion of the picture but didn't work, implemented selecting a picture from file explorer
 * 4.25 Tried to figure out how to let the user input a link for a picture, but the text box dialogue didn't allow for long enough string
 * 4.27-28 Added capability to turn on video, still working on tracking the face - the coordinate system is messed up so the box isn't around the correct spot
+* 4.30 Box follows face properly

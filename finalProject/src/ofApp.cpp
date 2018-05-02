@@ -6,7 +6,7 @@ using namespace ofxCv;
 //--------------------------------------------------------------
 void ofApp::setup(){
 	// Load the default image of our good man Carl
-	test.loadImage("http://xpacc.illinois.edu/files/2014/12/xpacc3-250x375.jpg");
+	current_pic.loadImage("http://xpacc.illinois.edu/files/2014/12/xpacc3-250x375.jpg");
 
 	updateImage();
 
@@ -24,7 +24,7 @@ void ofApp::setup(){
 	load_image_from_link_button.addListener(this, &ofApp::loadImageFromLinkButtonPressed);
 	revert_button.addListener(this, &ofApp::revertButtonPressed);
 
-	// Set up the camera and facial recognition
+	// Set up the camera and face detection
 	ofSetVerticalSync(true);
 	ofSetFrameRate(120);
 	finder.setup("haarcascade_frontalface_default.xml");
@@ -35,10 +35,15 @@ void ofApp::setup(){
 }
 
 void ofApp::updateImage() {
+	// Saves the image before video turned on
+	if (!video_toggle) {
+		previous_pic = current_pic;
+	}
+
 	double ideal_height = ofGetHeight() / 2;
 	double ideal_width = ofGetWidth() / 2;
-	double height = test.getHeight();
-	double width = test.getWidth();
+	double height = current_pic.getHeight();
+	double width = current_pic.getWidth();
 	// Scales the image so it is still the same aspect ratio, but the dimensions are no more than 500x500
 	if ((height > ideal_height || width > ideal_width) || (height < ideal_height && width < ideal_width)) {
 		double scale_factor;
@@ -48,14 +53,14 @@ void ofApp::updateImage() {
 		else {
 			scale_factor = ideal_width / width;
 		}
-		test.resize(scale_factor * width, scale_factor * height);
+		current_pic.resize(scale_factor * width, scale_factor * height);
 	}
 
-	img.setFromPixels(test.getPixels());
+	cv_img.setFromPixels(current_pic.getPixels());
 }
 
 void ofApp::revertButtonPressed(const void *sender) {
-	img.setFromPixels(test.getPixels());
+	cv_img.setFromPixels(current_pic.getPixels());
 	grayscale_toggle = false;
 	faces_toggle = false;
 }
@@ -66,18 +71,18 @@ void ofApp::loadImageFromFileButtonPressed(const  void *sender) {
 	if (result.bSuccess) {
 		string path = result.getPath();
 		// Does not work with png
-		if (path.substr(path.length() - 3, path.length()) == "png") {
-			ofSystemAlertDialog("Use a jpg, not png!");
+		if (path.substr(path.length() - 3, path.length()) != "jpg") {
+			ofSystemAlertDialog("Use a jpg");
 			return;
 		}
-		test.loadImage(path);
+		current_pic.loadImage(path);
 		updateImage();
 	}
 }
 
 void ofApp::loadImageFromLinkButtonPressed(const void *sender) {
 	string link = ofSystemTextBoxDialog("What is the link?", "Link");
-	test.loadImage(link);
+	current_pic.loadImage(link);
 	updateImage();
 }
 
@@ -90,7 +95,7 @@ void ofApp::update(){
 		}
 	}
 	else {
-		finder.update(img);
+		finder.update(cv_img);
 	}
 }
 
@@ -101,42 +106,56 @@ void ofApp::draw(){
 	// Handles face tracking when taking in video
 	if (video_toggle) {
 		ofSetColor(255, 255, 255);
-		camera.draw(ofGetWidth() / 4, ofGetHeight() / 4);
-		ofNoFill();
-		ofSetColor(0, 0, 250);
-		// Tracks face with square
-		for (int i = 0; i < finder.size(); i++) {
-			ofRectangle face = finder.getObjectSmoothed(i);
-			face.setPosition(face.x + ofGetWidth() / 4, face.y + ofGetHeight() / 4);
-			ofDrawRectangle(face);
+		current_pic.setFromPixels(camera.getPixels());
+		updateImage();
+		if (grayscale_toggle) {
+			drawGray();
 		}
-		return;
-	}
+		else {
+			cv_img.draw(ofGetWidth() / 4, ofGetHeight() / 4);
+		}
 
-	// Handles grayscale
-	if (grayscale_toggle) {
-		ofSetColor(255, 255, 255);
-		ofxCvGrayscaleImage gray_img;
-		gray_img.setFromColorImage(img);
-		gray_img.draw(ofGetWidth() / 4, ofGetHeight() / 4);
-		//img.drawROI(5, 5);
-		//drag.draw(100, 100);
+		if (faces_toggle) {
+			ofNoFill();
+			ofSetColor(0, 0, 250);
+			drawFaceBox();
+		}
 	}
 	else {
-		ofSetColor(255, 255, 255);
-		img.draw(ofGetWidth() / 4, ofGetHeight() / 4);
-	}
-
-	// Handles facial recognition on an image
-	if (faces_toggle) {
-		ofNoFill();
-		ofSetColor(0, 0, 250);
-		ofRectangle face;
-		for (unsigned int i = 0; i < finder.size(); i++) {
-			face = finder.getObject(i);
-			face.setPosition(face.x + ofGetWidth() / 4, face.y + ofGetHeight() / 4);
-			ofDrawRectangle(face);
+		current_pic = previous_pic;
+		updateImage();
+		// Handles grayscale
+		if (grayscale_toggle) {
+			ofSetColor(255, 255, 255);
+			drawGray();
 		}
+		else {
+			ofSetColor(255, 255, 255);
+			cv_img.draw(ofGetWidth() / 4, ofGetHeight() / 4);
+		}
+
+		// Handles facial recognition on an image
+		if (faces_toggle) {
+			ofNoFill();
+			ofSetColor(0, 0, 250);
+			drawFaceBox();
+		}
+	}
+}
+
+void ofApp::drawGray() {
+	ofxCvGrayscaleImage gray_img;
+	gray_img.allocate(cv_img.getWidth(), cv_img.getHeight());
+	gray_img.setFromColorImage(cv_img);
+	gray_img.draw(ofGetWidth() / 4, ofGetHeight() / 4);
+}
+
+void ofApp::drawFaceBox() {
+	ofRectangle face;
+	for (unsigned int i = 0; i < finder.size(); i++) {
+		face = finder.getObject(i);
+		face.setPosition(face.x + ofGetWidth() / 4, face.y + ofGetHeight() / 4);
+		ofDrawRectangle(face);
 	}
 }
 

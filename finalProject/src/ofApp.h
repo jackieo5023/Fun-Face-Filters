@@ -6,8 +6,9 @@
 #include "../addons/ofxCv/src/ofxCv.h"
 
 class ofApp : public ofBaseApp {
-	ofImage test;
-	ofxCvColorImage img;
+	ofImage previous_pic;
+	ofImage current_pic;
+	ofxCvColorImage cv_img;
 
 	ofxCv::ObjectFinder finder;
 	ofVideoGrabber camera;
@@ -33,6 +34,9 @@ class ofApp : public ofBaseApp {
 		void draw();
 
 		void updateImage();
+
+		void drawGray();
+		void drawFaceBox();
 
 		void revertButtonPressed(const void *sender);
 		void loadImageFromFileButtonPressed(const void *sender);

@@ -5,3 +5,5 @@
 * 4.25 Tried to figure out how to let the user input a link for a picture, but the text box dialogue didn't allow for long enough string
 * 4.27-28 Added capability to turn on video, still working on tracking the face - the coordinate system is messed up so the box isn't around the correct spot
 * 4.30 Box follows face properly
+* 5.2
+    * Add ability to turn on/off grayscale/face detection on video

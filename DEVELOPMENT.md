@@ -7,3 +7,4 @@
 * 4.30 Box follows face properly
 * 5.2
     * Add ability to turn on/off grayscale/face detection on video
+    * Add ability to take and save picture

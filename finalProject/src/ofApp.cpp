@@ -102,22 +102,20 @@ void ofApp::update(){
 //--------------------------------------------------------------
 void ofApp::draw(){
 	gui.draw();
+	ofSetColor(255, 255, 255);
 
-	// Handles face tracking when taking in video
 	if (video_toggle) {
-		ofSetColor(255, 255, 255);
 		current_pic.setFromPixels(camera.getPixels());
 		updateImage();
 		if (grayscale_toggle) {
 			drawGray();
 		}
 		else {
+			ofSetColor(255, 255, 255);
 			cv_img.draw(ofGetWidth() / 4, ofGetHeight() / 4);
 		}
 
 		if (faces_toggle) {
-			ofNoFill();
-			ofSetColor(0, 0, 250);
 			drawFaceBox();
 		}
 	}
@@ -126,7 +124,6 @@ void ofApp::draw(){
 		updateImage();
 		// Handles grayscale
 		if (grayscale_toggle) {
-			ofSetColor(255, 255, 255);
 			drawGray();
 		}
 		else {
@@ -136,14 +133,14 @@ void ofApp::draw(){
 
 		// Handles facial recognition on an image
 		if (faces_toggle) {
-			ofNoFill();
-			ofSetColor(0, 0, 250);
 			drawFaceBox();
 		}
 	}
 }
 
 void ofApp::drawGray() {
+	ofSetColor(255, 255, 255);
+
 	ofxCvGrayscaleImage gray_img;
 	gray_img.allocate(cv_img.getWidth(), cv_img.getHeight());
 	gray_img.setFromColorImage(cv_img);
@@ -151,6 +148,9 @@ void ofApp::drawGray() {
 }
 
 void ofApp::drawFaceBox() {
+	ofNoFill();
+	ofSetColor(0, 0, 250);
+
 	ofRectangle face;
 	for (unsigned int i = 0; i < finder.size(); i++) {
 		face = finder.getObject(i);
@@ -161,7 +161,12 @@ void ofApp::drawFaceBox() {
 
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key){
-
+	if (key == ' ') {
+		ofImage img_to_save;
+		img_to_save.grabScreen(ofGetWidth() / 4, ofGetHeight() / 4, cv_img.getWidth(), cv_img.getHeight());
+		//img_to_save.loadImage(getPix)
+		img_to_save.save("filtered_picture_" + ofGetTimestampString() + ".jpg");
+	}
 }
 
 //--------------------------------------------------------------

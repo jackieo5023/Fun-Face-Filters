@@ -17,6 +17,7 @@ void ofApp::setup(){
 	gui.add(revert_button.setup("Revert"));
 	gui.add(grayscale_toggle.setup("Grayscale", false));
 	gui.add(faces_toggle.setup("Show faces", false));
+	gui.add(faceblur_toggle.setup("Blur faces", false));
 	gui.add(video_toggle.setup("Show video", false));
 
 	// Set up the button listeners
@@ -63,6 +64,7 @@ void ofApp::revertButtonPressed(const void *sender) {
 	cv_img.setFromPixels(current_pic.getPixels());
 	grayscale_toggle = false;
 	faces_toggle = false;
+	faceblur_toggle = false;
 }
 
 // From http://openframeworks.cc/documentation/utils/ofSystemUtils/#!show_ofSystemLoadDialog
@@ -118,6 +120,10 @@ void ofApp::draw(){
 		if (faces_toggle) {
 			drawFaceBox();
 		}
+
+		if (faceblur_toggle) {
+			drawBlurredFace();
+		}
 	}
 	else {
 		current_pic = previous_pic;
@@ -134,6 +140,10 @@ void ofApp::draw(){
 		// Handles facial recognition on an image
 		if (faces_toggle) {
 			drawFaceBox();
+		}
+
+		if (faceblur_toggle) {
+			drawBlurredFace();
 		}
 	}
 }
@@ -157,6 +167,43 @@ void ofApp::drawFaceBox() {
 		face.setPosition(face.x + ofGetWidth() / 4, face.y + ofGetHeight() / 4);
 		ofDrawRectangle(face);
 	}
+}
+
+void ofApp::drawBlurredFace() {
+	ofRectangle face;
+	for (unsigned int i = 0; i < finder.size(); i++) {
+		face = finder.getObject(i);
+		face.setPosition(face.x + ofGetWidth() / 4, face.y + ofGetHeight() / 4);
+
+
+		if (grayscale_toggle) {
+			ofxCvGrayscaleImage gray_img;
+			gray_img.allocate(cv_img.getWidth(), cv_img.getHeight());
+			gray_img.setFromColorImage(cv_img);
+			gray_img.setROI(face.x - ofGetWidth() / 4, face.y - ofGetHeight() / 4, face.width, face.height);
+
+			ofxCvGrayscaleImage img; // Allocate pls
+			img.setFromPixels(gray_img.getRoiPixels());
+			for (int j = 0; j < 100; j++) {
+				img.blurGaussian();
+			}
+			ofSetColor(255, 255, 255);
+			img.draw(face.x, face.y);
+		}
+		else {
+			cv_img.setROI(face.x - ofGetWidth() / 4, face.y - ofGetHeight() / 4, face.width, face.height);
+
+			ofxCvColorImage img; // Allocate pls
+			img.setFromPixels(cv_img.getRoiPixels());
+			for (int j = 0; j < 100; j++) {
+				img.blurGaussian();
+			}
+			ofSetColor(255, 255, 255);
+			img.draw(face.x, face.y);
+		}
+
+	}
+	cv_img.resetROI();
 }
 
 //--------------------------------------------------------------

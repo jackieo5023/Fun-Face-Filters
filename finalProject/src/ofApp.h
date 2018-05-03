@@ -19,6 +19,7 @@ class ofApp : public ofBaseApp {
 	ofxButton revert_button;
 	ofxToggle grayscale_toggle;
 	ofxToggle faces_toggle;
+	ofxToggle faceblur_toggle;
 	ofxToggle video_toggle;
 
 	ofRectangle rect;
@@ -37,6 +38,7 @@ class ofApp : public ofBaseApp {
 
 		void drawGray();
 		void drawFaceBox();
+		void drawBlurredFace();
 
 		void revertButtonPressed(const void *sender);
 		void loadImageFromFileButtonPressed(const void *sender);

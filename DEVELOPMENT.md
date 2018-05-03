@@ -8,3 +8,4 @@
 * 5.2
     * Add ability to turn on/off grayscale/face detection on video
     * Add ability to take and save picture
+    * Add ability to toggle blurred faces

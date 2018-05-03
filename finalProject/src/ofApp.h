@@ -6,13 +6,17 @@
 #include "../addons/ofxCv/src/ofxCv.h"
 
 class ofApp : public ofBaseApp {
+	// Images to manipulate
 	ofImage previous_pic;
 	ofImage current_pic;
 	ofxCvColorImage cv_img;
+	ofxCvGrayscaleImage gray_img;
 
+	// Video/facial tracking
 	ofxCv::ObjectFinder finder;
 	ofVideoGrabber camera;
 
+	// GUI
 	ofxPanel gui;
 	ofxButton load_image_from_file_button;
 	ofxButton revert_button;
@@ -24,8 +28,8 @@ class ofApp : public ofBaseApp {
 	ofxToggle got_toggle;
 	ofxToggle video_toggle;
 
+	// Images for filters
 	ofImage top_hat;
-	ofImage scaled_hat;
 	ofImage harry_potter;
 	ofImage game_of_thrones_crown;
 
@@ -39,6 +43,7 @@ class ofApp : public ofBaseApp {
 
 		void updateImage();
 		void drawHelper();
+		void drawHat(ofImage &hat);
 
 		void drawGray();
 		void drawFaceBox();
@@ -47,6 +52,7 @@ class ofApp : public ofBaseApp {
 		void drawHP();
 		void drawGOT();
 
+		// Button listeners
 		void revertButtonPressed(const void *sender);
 		void loadImageFromFileButtonPressed(const void *sender);
 

@@ -5,11 +5,12 @@ using namespace ofxCv;
 
 //--------------------------------------------------------------
 void ofApp::setup(){
+	ofBackground(226, 234, 255);
+
 	// Load the default image of our good man Carl and images for filters
 	current_pic.loadImage("http://xpacc.illinois.edu/files/2014/12/xpacc3-250x375.jpg");
 	updateImage();
 	top_hat.load("top_hat.png");
-	scaled_hat.load("top_hat.png");
 	harry_potter.load("hp.png");
 	game_of_thrones_crown.load("got.png");
 
@@ -21,8 +22,8 @@ void ofApp::setup(){
 	gui.add(faces_toggle.setup("Show faces", false));
 	gui.add(faceblur_toggle.setup("Blur faces", false));
 	gui.add(top_hat_toggle.setup("Add top hat", false));
-	gui.add(hp_toggle.setup("Be Harry Potter", false));
-	gui.add(got_toggle.setup("Be King/Queen of 7 Kingdoms", false));
+	gui.add(hp_toggle.setup("Add Harry Potter", false));
+	gui.add(got_toggle.setup("Add Game of Thrones", false));
 	gui.add(video_toggle.setup("Show video", false));
 
 	// Set up the button listeners
@@ -61,7 +62,10 @@ void ofApp::updateImage() {
 		current_pic.resize(scale_factor * width, scale_factor * height);
 	}
 
+	cv_img.allocate(current_pic.getWidth(), current_pic.getHeight());
 	cv_img.setFromPixels(current_pic.getPixels());
+	gray_img.allocate(cv_img.getWidth(), cv_img.getHeight());
+	gray_img.setFromColorImage(cv_img);
 }
 
 void ofApp::revertButtonPressed(const void *sender) {
@@ -112,6 +116,7 @@ void ofApp::draw(){
 		current_pic.setFromPixels(camera.getPixels());
 	}
 	else {
+		// Update the picture to be the last one before video turned on
 		current_pic = previous_pic;
 	}
 
@@ -151,10 +156,6 @@ void ofApp::drawHelper() {
 
 void ofApp::drawGray() {
 	ofSetColor(255, 255, 255);
-
-	ofxCvGrayscaleImage gray_img;
-	gray_img.allocate(cv_img.getWidth(), cv_img.getHeight());
-	gray_img.setFromColorImage(cv_img);
 	gray_img.draw(ofGetWidth() / 4, ofGetHeight() / 4);
 }
 
@@ -176,50 +177,60 @@ void ofApp::drawBlurredFace() {
 		face = finder.getObject(i);
 		face.setPosition(face.x + ofGetWidth() / 4, face.y + ofGetHeight() / 4);
 
+		ofxCvImage *img;
+
 		if (grayscale_toggle) {
-			ofxCvGrayscaleImage gray_img; // have gray global
-			gray_img.allocate(cv_img.getWidth(), cv_img.getHeight());
-			gray_img.setFromColorImage(cv_img);
 			gray_img.setROI(face.x - ofGetWidth() / 4, face.y - ofGetHeight() / 4, face.width, face.height);
 
-			ofxCvGrayscaleImage img; // Allocate pls
-			img.setFromPixels(gray_img.getRoiPixels());
-			for (int j = 0; j < 100; j++) {
-				img.blurGaussian();
-			}
-			ofSetColor(255, 255, 255);
-			img.draw(face.x, face.y);
+			img = new ofxCvGrayscaleImage();
+			ofPixels &pixels = gray_img.getRoiPixels();
+			img->allocate(pixels.getWidth(), pixels.getHeight());
+			img->setFromPixels(pixels);
 		}
 		else {
 			cv_img.setROI(face.x - ofGetWidth() / 4, face.y - ofGetHeight() / 4, face.width, face.height);
 
-			ofxCvColorImage img; // Allocate pls
-			img.setFromPixels(cv_img.getRoiPixels());
-			for (int j = 0; j < 100; j++) {
-				img.blurGaussian();
-			}
-			ofSetColor(255, 255, 255);
-			img.draw(face.x, face.y);
+			img = new  ofxCvColorImage();
+			ofPixels &pixels = cv_img.getRoiPixels();
+			img->allocate(pixels.getWidth(), pixels.getHeight());
+			img->setFromPixels(pixels);
 		}
 
+		for (int j = 0; j < 100; j++) {
+			img->blurGaussian();
+		}
+		ofSetColor(255, 255, 255);
+		img->draw(face.x, face.y);
+
+		delete img;
 	}
+	gray_img.resetROI();
 	cv_img.resetROI();
 }
 
-void ofApp::drawTopHat() {
+void ofApp::drawHat(ofImage &hat) {
 	ofSetColor(255, 255, 255);
 	// Lots of interseting guess and check/math to get the hat in the correct spot
 	ofRectangle face;
 	for (int i = 0; i < finder.size(); i++) {
-		face = finder.getObject(i);
+		ofRectangle face = finder.getObjectSmoothed(i);
+		int x = face.x;
+		int y = face.y;
 		face.setPosition(face.x + ofGetWidth() / 4, face.y + ofGetHeight() / 4);
-
-		float scaleAmount = face.width / top_hat.getWidth();
-		if (scaleAmount > 1.3 || scaleAmount < .7) { // Try to reduce number of scales so less blurry
-			scaled_hat.resize(top_hat.getWidth() * scaleAmount, top_hat.getHeight() * scaleAmount);
-		}
-		scaled_hat.draw(face.x, face.y - scaled_hat.getHeight());
+		float scaleAmount = face.width / hat.getWidth();
+		ofPushMatrix();
+		ofTranslate(x + ofGetWidth() / 4, y + ofGetHeight() / 4);
+		ofScale(scaleAmount, scaleAmount);
+		hat.draw(x - face.getWidth() / 4, y - hat.getHeight());
+		ofPopMatrix();
+		ofPushMatrix();
+		ofTranslate(face.getPosition());
+		ofPopMatrix();
 	}
+}
+
+void ofApp::drawTopHat() {
+	drawHat(top_hat);
 }
 
 void ofApp::drawHP() {
@@ -243,27 +254,12 @@ void ofApp::drawHP() {
 }
 
 void ofApp::drawGOT() {
-	ofSetColor(255, 255, 255);
-	// Lots of interseting guess and check/math to get the crown in the correct spot
-	for (int i = 0; i < finder.size(); i++) {
-		ofRectangle face = finder.getObjectSmoothed(i);
-		int x = face.x;
-		int y = face.y;
-		face.setPosition(face.x + ofGetWidth() / 4, face.y + ofGetHeight() / 4);
-		float scaleAmount = face.width / game_of_thrones_crown.getWidth();
-		ofPushMatrix();
-		ofTranslate(x + ofGetWidth() / 4, y + ofGetHeight() / 4);
-		ofScale(scaleAmount, scaleAmount);
-		game_of_thrones_crown.draw(x - face.getWidth() / 4, y - game_of_thrones_crown.getHeight());
-		ofPopMatrix();
-		ofPushMatrix();
-		ofTranslate(face.getPosition());
-		ofPopMatrix();
-	}
+	drawHat(game_of_thrones_crown);
 }
 
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key){
+	// Saves the image to bin/data
 	if (key == ' ') {
 		ofImage img_to_save;
 		img_to_save.grabScreen(ofGetWidth() / 4, ofGetHeight() / 4, cv_img.getWidth(), cv_img.getHeight());
@@ -288,49 +284,12 @@ void ofApp::mouseDragged(int x, int y, int button){
 
 //--------------------------------------------------------------
 void ofApp::mousePressed(int x, int y, int button){
-	/*if (x < ofGetWidth() / 4) {
-		start_x = ofGetWidth() / 4;
-	}
-	else if (x > ofGetWidth() / 4 + img.getWidth()) {
-		start_x = ofGetWidth() / 4 + img.getWidth();
-	}
-	else {
-		start_x = x;
-	}
 
-	if (y < ofGetHeight() / 4) {
-		start_y = ofGetHeight() / 4;
-	}
-	else if (y > ofGetHeight() / 4 + img.getHeight()) {
-		start_y = ofGetHeight() / 4 + img.getHeight();
-	}
-	else {
-		start_y = y;
-	}*/
 }
 
 //--------------------------------------------------------------
 void ofApp::mouseReleased(int x, int y, int button){
-	//int end_x = x;
-	//int end_y = y;
 
-	//if (end_x < start_x) {
-	//	end_x = start_x;
-	//	start_x = x;
-	//}
-	//if (end_y < start_y) {
-	//	end_y = start_y;
-	//	start_y = y;
-	//}
-
-	//ofPoint s(start_x, start_y);
-	//ofPoint e(end_x, end_y);
-	//rect.set(s, e);
-	////img.setROI(start_x, start_y, end_x - start_x, end_y - start_y);
-	//img.setROI(rect);
-	//drag.setFromPixels(img.getRoiPixels());
-	////rect = img.getROI();
-	//img.resetROI();
 }
 
 //--------------------------------------------------------------

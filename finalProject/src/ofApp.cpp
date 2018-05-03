@@ -5,24 +5,28 @@ using namespace ofxCv;
 
 //--------------------------------------------------------------
 void ofApp::setup(){
-	// Load the default image of our good man Carl
+	// Load the default image of our good man Carl and images for filters
 	current_pic.loadImage("http://xpacc.illinois.edu/files/2014/12/xpacc3-250x375.jpg");
-
 	updateImage();
+	top_hat.load("top_hat.png");
+	scaled_hat.load("top_hat.png");
+	harry_potter.load("hp.png");
+	game_of_thrones_crown.load("got.png");
 
 	// Load the gui
 	gui.setup();
 	gui.add(load_image_from_file_button.setup("Choose image file"));
-	gui.add(load_image_from_link_button.setup("Choose image link"));
 	gui.add(revert_button.setup("Revert"));
 	gui.add(grayscale_toggle.setup("Grayscale", false));
 	gui.add(faces_toggle.setup("Show faces", false));
 	gui.add(faceblur_toggle.setup("Blur faces", false));
+	gui.add(top_hat_toggle.setup("Add top hat", false));
+	gui.add(hp_toggle.setup("Be Harry Potter", false));
+	gui.add(got_toggle.setup("Be King/Queen of 7 Kingdoms", false));
 	gui.add(video_toggle.setup("Show video", false));
 
 	// Set up the button listeners
 	load_image_from_file_button.addListener(this, &ofApp::loadImageFromFileButtonPressed);
-	load_image_from_link_button.addListener(this, &ofApp::loadImageFromLinkButtonPressed);
 	revert_button.addListener(this, &ofApp::revertButtonPressed);
 
 	// Set up the camera and face detection
@@ -65,6 +69,9 @@ void ofApp::revertButtonPressed(const void *sender) {
 	grayscale_toggle = false;
 	faces_toggle = false;
 	faceblur_toggle = false;
+	top_hat_toggle = false;
+	hp_toggle = false;
+	got_toggle = false;
 }
 
 // From http://openframeworks.cc/documentation/utils/ofSystemUtils/#!show_ofSystemLoadDialog
@@ -72,7 +79,7 @@ void ofApp::loadImageFromFileButtonPressed(const  void *sender) {
 	ofFileDialogResult result = ofSystemLoadDialog("Load file");
 	if (result.bSuccess) {
 		string path = result.getPath();
-		// Does not work with png
+		// Only works with jpg
 		if (path.substr(path.length() - 3, path.length()) != "jpg") {
 			ofSystemAlertDialog("Use a jpg");
 			return;
@@ -82,14 +89,9 @@ void ofApp::loadImageFromFileButtonPressed(const  void *sender) {
 	}
 }
 
-void ofApp::loadImageFromLinkButtonPressed(const void *sender) {
-	string link = ofSystemTextBoxDialog("What is the link?", "Link");
-	current_pic.loadImage(link);
-	updateImage();
-}
-
 //--------------------------------------------------------------
 void ofApp::update(){
+	// Updates the video feed and/or face detector
 	if (video_toggle) {
 		camera.update();
 		if (camera.isFrameNew()) {
@@ -108,43 +110,42 @@ void ofApp::draw(){
 
 	if (video_toggle) {
 		current_pic.setFromPixels(camera.getPixels());
-		updateImage();
-		if (grayscale_toggle) {
-			drawGray();
-		}
-		else {
-			ofSetColor(255, 255, 255);
-			cv_img.draw(ofGetWidth() / 4, ofGetHeight() / 4);
-		}
-
-		if (faces_toggle) {
-			drawFaceBox();
-		}
-
-		if (faceblur_toggle) {
-			drawBlurredFace();
-		}
 	}
 	else {
 		current_pic = previous_pic;
-		updateImage();
-		// Handles grayscale
-		if (grayscale_toggle) {
-			drawGray();
-		}
-		else {
-			ofSetColor(255, 255, 255);
-			cv_img.draw(ofGetWidth() / 4, ofGetHeight() / 4);
-		}
+	}
 
-		// Handles facial recognition on an image
-		if (faces_toggle) {
-			drawFaceBox();
-		}
+	drawHelper();
+}
 
-		if (faceblur_toggle) {
-			drawBlurredFace();
-		}
+void ofApp::drawHelper() {
+	updateImage();
+	if (grayscale_toggle) {
+		drawGray();
+	}
+	else {
+		ofSetColor(255, 255, 255);
+		cv_img.draw(ofGetWidth() / 4, ofGetHeight() / 4);
+	}
+
+	if (faces_toggle) {
+		drawFaceBox();
+	}
+
+	if (faceblur_toggle) {
+		drawBlurredFace();
+	}
+
+	if (top_hat_toggle) {
+		drawTopHat();
+	}
+
+	if (hp_toggle) {
+		drawHP();
+	}
+
+	if (got_toggle) {
+		drawGOT();
 	}
 }
 
@@ -175,9 +176,8 @@ void ofApp::drawBlurredFace() {
 		face = finder.getObject(i);
 		face.setPosition(face.x + ofGetWidth() / 4, face.y + ofGetHeight() / 4);
 
-
 		if (grayscale_toggle) {
-			ofxCvGrayscaleImage gray_img;
+			ofxCvGrayscaleImage gray_img; // have gray global
 			gray_img.allocate(cv_img.getWidth(), cv_img.getHeight());
 			gray_img.setFromColorImage(cv_img);
 			gray_img.setROI(face.x - ofGetWidth() / 4, face.y - ofGetHeight() / 4, face.width, face.height);
@@ -206,12 +206,67 @@ void ofApp::drawBlurredFace() {
 	cv_img.resetROI();
 }
 
+void ofApp::drawTopHat() {
+	ofSetColor(255, 255, 255);
+	// Lots of interseting guess and check/math to get the hat in the correct spot
+	ofRectangle face;
+	for (int i = 0; i < finder.size(); i++) {
+		face = finder.getObject(i);
+		face.setPosition(face.x + ofGetWidth() / 4, face.y + ofGetHeight() / 4);
+
+		float scaleAmount = face.width / top_hat.getWidth();
+		if (scaleAmount > 1.3 || scaleAmount < .7) { // Try to reduce number of scales so less blurry
+			scaled_hat.resize(top_hat.getWidth() * scaleAmount, top_hat.getHeight() * scaleAmount);
+		}
+		scaled_hat.draw(face.x, face.y - scaled_hat.getHeight());
+	}
+}
+
+void ofApp::drawHP() {
+	ofSetColor(255, 255, 255);
+	// Lots of interseting guess and check/math to get the glasses in the correct spot
+	for (int i = 0; i < finder.size(); i++) {
+		ofRectangle face = finder.getObjectSmoothed(i);
+		int x = face.x;
+		int y = face.y;
+		face.setPosition(face.x + ofGetWidth() / 4, face.y + ofGetHeight() / 4);
+		float scaleAmount = .85 * face.width / harry_potter.getWidth();
+		ofPushMatrix();
+		ofTranslate(x + ofGetWidth() / 4, y + ofGetHeight() / 4);
+		ofScale(scaleAmount, scaleAmount);
+		harry_potter.draw(2 * x, -2 * y);
+		ofPopMatrix();
+		ofPushMatrix();
+		ofTranslate(face.getPosition());
+		ofPopMatrix();
+	}
+}
+
+void ofApp::drawGOT() {
+	ofSetColor(255, 255, 255);
+	// Lots of interseting guess and check/math to get the crown in the correct spot
+	for (int i = 0; i < finder.size(); i++) {
+		ofRectangle face = finder.getObjectSmoothed(i);
+		int x = face.x;
+		int y = face.y;
+		face.setPosition(face.x + ofGetWidth() / 4, face.y + ofGetHeight() / 4);
+		float scaleAmount = face.width / game_of_thrones_crown.getWidth();
+		ofPushMatrix();
+		ofTranslate(x + ofGetWidth() / 4, y + ofGetHeight() / 4);
+		ofScale(scaleAmount, scaleAmount);
+		game_of_thrones_crown.draw(x - face.getWidth() / 4, y - game_of_thrones_crown.getHeight());
+		ofPopMatrix();
+		ofPushMatrix();
+		ofTranslate(face.getPosition());
+		ofPopMatrix();
+	}
+}
+
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key){
 	if (key == ' ') {
 		ofImage img_to_save;
 		img_to_save.grabScreen(ofGetWidth() / 4, ofGetHeight() / 4, cv_img.getWidth(), cv_img.getHeight());
-		//img_to_save.loadImage(getPix)
 		img_to_save.save("filtered_picture_" + ofGetTimestampString() + ".jpg");
 	}
 }

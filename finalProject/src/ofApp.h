@@ -15,16 +15,19 @@ class ofApp : public ofBaseApp {
 
 	ofxPanel gui;
 	ofxButton load_image_from_file_button;
-	ofxButton load_image_from_link_button;
 	ofxButton revert_button;
 	ofxToggle grayscale_toggle;
 	ofxToggle faces_toggle;
 	ofxToggle faceblur_toggle;
+	ofxToggle top_hat_toggle;
+	ofxToggle hp_toggle;
+	ofxToggle got_toggle;
 	ofxToggle video_toggle;
 
-	ofRectangle rect;
-	//ofImage drag;
-	ofxCvColorImage drag;
+	ofImage top_hat;
+	ofImage scaled_hat;
+	ofImage harry_potter;
+	ofImage game_of_thrones_crown;
 
 	int start_x;
 	int start_y;
@@ -35,14 +38,17 @@ class ofApp : public ofBaseApp {
 		void draw();
 
 		void updateImage();
+		void drawHelper();
 
 		void drawGray();
 		void drawFaceBox();
 		void drawBlurredFace();
+		void drawTopHat();
+		void drawHP();
+		void drawGOT();
 
 		void revertButtonPressed(const void *sender);
 		void loadImageFromFileButtonPressed(const void *sender);
-		void loadImageFromLinkButtonPressed(const void *sender);
 
 		void keyPressed(int key);
 		void keyReleased(int key);

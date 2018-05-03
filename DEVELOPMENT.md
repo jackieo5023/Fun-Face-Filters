@@ -9,3 +9,6 @@
     * Add ability to turn on/off grayscale/face detection on video
     * Add ability to take and save picture
     * Add ability to toggle blurred faces
+    * Add snapchat-like face tracking filters (was a lot of struggling on how to not rescale the image every time, but not recopy it since it'll slow down video)
+    * Did some fancy matrix stuff with face tracking filters, struggled with understanding how to do that
+    * Add top hat, Harry Potter, and Game of Thrones face tracking filters

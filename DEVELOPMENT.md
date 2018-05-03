@@ -12,3 +12,4 @@
     * Add snapchat-like face tracking filters (was a lot of struggling on how to not rescale the image every time, but not recopy it since it'll slow down video)
     * Did some fancy matrix stuff with face tracking filters, struggled with understanding how to do that
     * Add top hat, Harry Potter, and Game of Thrones face tracking filters
+    * Edit code for quality and readability
